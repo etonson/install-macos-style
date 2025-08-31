@@ -1,5 +1,4 @@
 #!/bin/bash
-
 set -e
 
 echo "🔄 更新系統"
@@ -15,11 +14,13 @@ sudo apt install -y \
   fonts-firacode \
   curl \
   git \
+  unzip \
   plank \
   arc-theme \
   gnome-shell-extension-appindicator \
   gir1.2-appindicator3-0.1 \
-  papirus-icon-theme
+  papirus-icon-theme \
+  p7zip-full
 
 # 關閉 Ubuntu 預設 Dock
 echo "❌ 關閉 Ubuntu Dock"
@@ -63,7 +64,7 @@ gsettings set org.gnome.desktop.interface cursor-theme 'WhiteSur-cursors'
 
 # 安裝 ArcMenu 擴充
 if ! gnome-extensions list | grep -q arcmenu@arcmenu.com; then
-  echo "📥 安裝 ArcMenu (請改用 Extension Manager 安裝或手動)"
+  echo "📥 請透過 Extension Manager 安裝 ArcMenu"
 else
   echo "✅ ArcMenu 已安裝"
   gnome-extensions enable arcmenu@arcmenu.com || true
@@ -88,16 +89,36 @@ EOF
 # 安裝 GDM 登入主題（需要 sudo）
 echo "✅ WhiteSur GDM 登入主題安裝（需 sudo）"
 if [ -d "$HOME/WhiteSur-gtk-theme" ]; then
-  sudo "$HOME/WhiteSur-gtk-theme/install-gdm-theme.sh" || echo "GDM 主題安裝失敗，請手動執行"
+  sudo "$HOME/WhiteSur-gtk-theme/install-gdm-theme.sh" || echo "⚠️ GDM 主題安裝失敗，請手動執行"
 else
   echo "找不到 WhiteSur 主題目錄，無法安裝 GDM 主題"
 fi
 
+# 安裝 SF Pro 字體
+echo "🔤 安裝 SF Pro 字體"
+FONT_DIR="$HOME/.local/share/fonts/SFPro"
+if [ ! -d "$FONT_DIR" ]; then
+  mkdir -p "$FONT_DIR"
+  cd "$FONT_DIR"
+  echo "📥 從 Apple 官方下載 SF Pro 字體 (需同意 Apple EULA)"
+  curl -L -o SFPro.dmg "https://developer.apple.com/design/downloads/SF-Pro.dmg"
+
+  echo "📦 解壓縮 SF Pro.dmg"
+  7z x SFPro.dmg -oSFPro_extract
+  7z x SFPro_extract/*.pkg -oSFPro_pkg
+  7z x SFPro_pkg/*.pkg -oSFPro_fonts
+
+  find SFPro_fonts -name "*.ttf" -exec cp {} "$FONT_DIR" \;
+  fc-cache -f -v
+  cd ~
+else
+  echo "SF Pro 字體已安裝，跳過"
+fi
+
 # GNOME 快捷鍵調整
-echo "🔄 GNOME 快捷鍵微調"
+echo "⌨️ GNOME 快捷鍵微調"
 gsettings set org.gnome.desktop.wm.keybindings switch-applications "['<Alt>Tab']"
 gsettings set org.gnome.desktop.wm.keybindings switch-group "['<Super>grave']"
 
-echo "⚠️ 請登出，並在登入畫面選擇『Ubuntu on Xorg』，才能享受完整 macOS 化效果！"
-echo "🎉 安裝完成！"
-
+echo "⚠️ 登出並在登入畫面選『Ubuntu on Xorg』，才能享受完整 macOS 化效果"
+echo "🎉 Ubuntu GNOME macOS 化完成 (含 SF Pro 字體)！"
